@@ -1,0 +1,19 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+    <h2>{{ user }}'s Watchlist:</h2>
+    {% for item in watchlist %}
+        <ul>
+            <li>Category: {{ item.category }}</li>
+            <li>ID: {{ item.id }}</li>
+            <li>Title: {{ item.title }}</li>
+            <li>Bid price: ${{ item.start_bid }}</li>
+            <li>Description: {{ item.description }}</li>
+            <li>
+                <img src="{{ item.image }}" alt="Item image" style="max-width:200px;">
+            </li>
+
+        </ul>
+    {% endfor %}
+
+{% endblock %}

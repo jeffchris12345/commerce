@@ -1,0 +1,61 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+    <form action="{% url 'create' %}" method="post">
+        {% csrf_token %}
+        <div>
+            {{ form.title.label_tag }}
+            {{ form.title }}
+            {{ form.title.errors }}
+        </div>
+
+        <div>
+            {{ form.description.label_tag }}
+            {{ form.description }}
+            {{ form.description.errors }}
+        </div>
+
+        <div>
+            {{ form.bid_price.label_tag }}
+            {{ form.bid_price }}
+            {{ form.bid_price.errors }}
+        </div>
+
+        <div>
+            {{ form.image_url.label_tag }}
+            {{ form.image_url }}
+            {{ form.image_url.errors }}
+        </div>
+
+        <div>
+            {{ form.category.label_tag }}
+            {{ form.category }}
+            {{ form.category.errors }}
+        </div>
+
+        <button type="submit">Submit</button>
+
+
+        <!--
+        <label>Title:</label><br>
+        <input type="text" name="title"><br>
+
+        <label>Description:</label><br>
+        <textarea name="description" style="width: 60%; height: 100px;"></textarea><br>
+
+        <label>Start Bid Price:</label><br>
+        <input type="text" name="start_bid"><br>
+
+        <label>Image URL:</label><br>
+        <input type="text" name="image" style="width: 60%;"><br>
+
+        <label>Category:</label><br>
+        <input type="text" name="category"><br>
+
+        <br>
+        <input type="submit" value="Save">
+        -->
+    </form>
+
+
+{% endblock %}
