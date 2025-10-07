@@ -5,8 +5,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django import forms
-
-from .models import User, Item
+from .models import User, Item, Bid
 
 CATEGORY_CHOICES = [
     ('fashion', 'Fashion'),
@@ -28,6 +27,14 @@ class CreateForm(forms.Form):
         widget=forms.Select,
         label="Select a Category"
     )
+
+
+class BidForm(forms.Form):
+    user_bid_price = forms.DecimalField(label="Enter Your Bid")
+
+
+#class CloseAuctionForm(forms.Form):
+#    user_bid_price = forms.DecimalField(label="Enter Your Bid")
 
 
 def index(request):
@@ -97,19 +104,60 @@ def listing(request):
 def item(request, listing_id):
     user = request.user
     item = Item.objects.get(id=listing_id)
+
+    if request.method == "POST":
+        if "submit_watchlist" in request.POST:
+            add = int(request.POST["add"])
+            if add == 0:
+                user.favorites.add(item)
+            else:
+                user.favorites.remove(item)
+            return HttpResponseRedirect(reverse("watchlist"))
+        elif "submit_close_auction" in request.POST:
+            item.onpost = 0
+            item.save()
+            if item.current_bidder:
+                return HttpResponse(f"Auction Closed! Winner is {item.current_bidder}!")
+            else:
+                return HttpResponse(f"Auction Closed! No winner.")
+        
+        elif "submit_bid" in request.POST:
+            form = BidForm(request.POST)
+            if form.is_valid():
+                bid_item = item
+                bid_user = user
+                user_bid_price = form.cleaned_data["user_bid_price"]
+
+                existing_bids = Bid.objects.filter(bid_item=item)
+                if existing_bids.exists():
+                    max_bid_price = existing_bids.order_by('-user_bid_price').first().user_bid_price
+                else:
+                    max_bid_price = 0
+
+                if user_bid_price > max_bid_price and user_bid_price >= item.bid_price:
+                    max_bid_price = user_bid_price
+                    item.current_bid_price = max_bid_price
+                    item.current_bidder = user.username
+                    item.save()
+                    bid = Bid(bid_item = bid_item, bid_user=bid_user, user_bid_price=user_bid_price, max_bid_price=max_bid_price)
+                    bid.save()
+                    return HttpResponse(f"Successfully bid by {user.username} at bid price of ${bid.user_bid_price}!!")
+                else:
+                    return HttpResponse(f"Unsuccessfully bid. Please place a higher price.")
+
+
+
     # check if item is in favorites
-    if user.favorites.filter(id=item.id).exists():
-        return render(request, "auctions/item.html", {
-            "item": item,
-            "add": 1,
-        })
-    else:
-        return render(request, "auctions/item.html", {
-            "item": item,
-            "add": 0,
-        })
+    is_watched = user.favorites.filter(id=listing_id).exists()
+    return render(request, "auctions/item.html", {
+        "item": item,
+        "add": 1 if is_watched else 0,
+        "form": BidForm(),
+        "close_auction": 1 if user.username==item.creator else 0,
+    })
 
 
+@login_required
 def create(request):
     
     if request.method == "POST":
@@ -121,8 +169,10 @@ def create(request):
             bid_price = form.cleaned_data["bid_price"]
             image_url = form.cleaned_data["image_url"]
             category = form.cleaned_data["category"]
+            current_bid_price = bid_price
+            creator = request.user
 
-            item = Item(title=title, description=description, bid_price=bid_price, image_url=image_url, category=category)
+            item = Item(title=title, description=description, bid_price=bid_price, image_url=image_url, category=category, current_bid_price=current_bid_price, creator=creator)
             item.save()
             
             return HttpResponseRedirect(reverse("index"))
@@ -137,20 +187,7 @@ def create(request):
 
 @login_required
 def watchlist(request):
-    if request.method == "POST":
-        user = request.user
-        item_id = request.POST["item_id"]
-        add = request.POST["add"]
-        item = Item.objects.get(id=item_id)
-        if add == 0:
-            user.favorites.add(item)
-        else:
-            user.favorites.remove(item)
-        
-        return render(request, "auctions/watchlist.html", {
-            "user_id": user.id,
-            "watchlist": user.favorites.all()
-        })    
+
 
     user = request.user
     return render(request, "auctions/watchlist.html", {

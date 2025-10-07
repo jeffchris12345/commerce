@@ -7,10 +7,10 @@
             <li>Category: {{ item.category }}</li>
             <li>ID: {{ item.id }}</li>
             <li>Title: {{ item.title }}</li>
-            <li>Bid price: ${{ item.start_bid }}</li>
+            <li>Bid price: ${{ item.bid_price }}</li>
             <li>Description: {{ item.description }}</li>
             <li>
-                <img src="{{ item.image }}" alt="Item image" style="max-width:200px;">
+                <img src="{{ item.image_url }}" alt="Item image" style="max-width:200px;">
             </li>
 
         </ul>
