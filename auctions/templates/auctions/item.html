@@ -1,13 +1,21 @@
 {% extends "auctions/layout.html" %}
 
 {% block body %}
+    
+    {% if congrats == 1 %}
+        <h1>Congratulations you are the WINNER!</h1>
+
+    {% endif %}
+
     <form method="POST" action="{% url 'item' listing_id=item.id %}">
         {% csrf_token %}
         <input type="hidden" name="add" value="{{ add }}">
-        {% if add == 0 %}
-            <button type="submit" name="submit_watchlist">Add to Watchlist</button>
-        {% else %}
-            <button type="submit" name="submit_watchlist">Remove from Watchlist</button>
+        {% if authenticated == 1 %}
+            {% if add == 0 %}
+                <button type="submit" name="submit_watchlist">Add to Watchlist</button>
+            {% else %}
+                <button type="submit" name="submit_watchlist">Remove from Watchlist</button>
+            {% endif %}
         {% endif %}
     </form>
  
@@ -26,13 +34,15 @@
         <dt>Title: </dt><dd>{{ item.title }}</dd>
         <dt>Starting Bid price: </dt><dd>${{ item.bid_price }}</dd>
         <dt>Current Bid price: </dt><dd>${{ item.current_bid_price }}</dd>
-        <dt>Enter your bid (must be higher than current bid price): </dt>
-        <form action="{% url 'item' listing_id=item.id %}" method="post">
-            {% csrf_token %}
-            {{ form.user_bid_price }}
-            <button type="submit" name="submit_bid">Submit Bid</button>
-        </form>
-
+        
+        {% if authenticated == 1 %}    
+            <dt>Enter your bid (must be higher than current bid price): </dt>    
+            <form action="{% url 'item' listing_id=item.id %}" method="post">
+                {% csrf_token %}
+                {{ form.user_bid_price }}
+                <button type="submit" name="submit_bid">Submit Bid</button>
+            </form>
+        {% endif %}
         
         <dt>Description: </dt><dd>{{ item.description }}</dd>
         <dd>
@@ -40,5 +50,23 @@
         </dd>
 
     </dl>
+
+    {% if authenticated == 1 %}
+        <form method="POST" action="{% url 'item' listing_id=item.id %}">
+            {% csrf_token %}
+            <textarea name="commentary" style="width: 60%; height: 100px;"></textarea><br>
+            <button type="submit" name="submit_commentary">Submit Your Comment</button>
+        </form><br>    
+    {% endif %}
+
+    <h2>Users' Comments:</h2>
+    <ol>
+        {% for comment in comments %}
+            <li>{{ comment.commentary }}</li>
+        {% empty %}
+            <h5>No comment from users yet.</h5>
+        {% endfor %}
+    </ol>
+
 
 {% endblock %}

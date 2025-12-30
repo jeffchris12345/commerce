@@ -22,9 +22,6 @@ class User(AbstractUser):
     def __str__(self):
         return f"{self.username}"
 
-#class Watchlist(models.Model):
-#    watcher = models.ForeignKey(User, on_delete=models.CASCADE, related_name="xx")
-#    watched_item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="xx")
 
 class Bid(models.Model):
     bid_item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="bid_log", null=True)
@@ -38,8 +35,9 @@ class Bid(models.Model):
 
 
 class Comment(models.Model):
-    pass
-
+    commented_item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="comment_log", null=True)
+    commented_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_log", null=True)
+    commentary = models.TextField(null=True)
 
 
 

@@ -5,7 +5,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django import forms
-from .models import User, Item, Bid
+from .models import User, Item, Bid, Comment
 
 CATEGORY_CHOICES = [
     ('fashion', 'Fashion'),
@@ -32,9 +32,6 @@ class CreateForm(forms.Form):
 class BidForm(forms.Form):
     user_bid_price = forms.DecimalField(label="Enter Your Bid")
 
-
-#class CloseAuctionForm(forms.Form):
-#    user_bid_price = forms.DecimalField(label="Enter Your Bid")
 
 
 def index(request):
@@ -97,15 +94,13 @@ def register(request):
         return render(request, "auctions/register.html")
 
 
-def listing(request):
-    return HttpResponse("Listing here... (under construction)")
-
-@login_required
 def item(request, listing_id):
-    user = request.user
+    if request.user.is_authenticated:
+        user = request.user
     item = Item.objects.get(id=listing_id)
+    comments = Comment.objects.filter(commented_item=item)
 
-    if request.method == "POST":
+    if request.method == "POST" and request.user.is_authenticated:
         if "submit_watchlist" in request.POST:
             add = int(request.POST["add"])
             if add == 0:
@@ -113,6 +108,13 @@ def item(request, listing_id):
             else:
                 user.favorites.remove(item)
             return HttpResponseRedirect(reverse("watchlist"))
+
+        elif "submit_commentary" in request.POST:
+            commentary = request.POST["commentary"]
+            new_comment = Comment(commented_item=item, commentary=commentary)
+            new_comment.save()
+            return HttpResponse(f"Comment submitted.")
+
         elif "submit_close_auction" in request.POST:
             item.onpost = 0
             item.save()
@@ -148,13 +150,24 @@ def item(request, listing_id):
 
 
     # check if item is in favorites
-    is_watched = user.favorites.filter(id=listing_id).exists()
-    return render(request, "auctions/item.html", {
-        "item": item,
-        "add": 1 if is_watched else 0,
-        "form": BidForm(),
-        "close_auction": 1 if user.username==item.creator else 0,
-    })
+    if request.user.is_authenticated:
+        is_watched = user.favorites.filter(id=listing_id).exists()
+        return render(request, "auctions/item.html", {
+            "item": item,
+            "authenticated": 1,
+            "add": 1 if is_watched else 0,
+            "form": BidForm(),
+            "close_auction": 1 if user.username==item.creator else 0,
+            "congrats": 1 if user.username==item.current_bidder else 0,
+            "comments": comments,
+        })
+    else:
+        return render(request, "auctions/item.html", {
+            "authenticated": 0,
+            "item": item,
+            "comments": comments,
+        })
+
 
 
 @login_required
@@ -188,13 +201,23 @@ def create(request):
 @login_required
 def watchlist(request):
 
-
     user = request.user
     return render(request, "auctions/watchlist.html", {
         "user_id": user.id,
-        "watchlist": user.favorites.all()
+        "watchlist": user.favorites.all(),
     })
 
 
 def category(request):
-    pass
+    categories=CATEGORY_CHOICES
+    return render(request, "auctions/category.html", {
+        "categories": categories,
+    })
+
+
+def category_value(request, cat_value):
+    items = Item.objects.filter(category=cat_value)
+    return render(request, "auctions/index.html", {
+        "items": items,
+        "cat_value": cat_value,
+    })

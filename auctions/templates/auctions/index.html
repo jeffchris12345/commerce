@@ -4,21 +4,23 @@
     <h2>Active Listings</h2>
 
     {% for item in items %}
-        {% if item.onpost == 1 %}
-            <div>
-                <a href="{% url 'item' listing_id=item.id %}">
-                    <img src="{{ item.image_url }}" alt="Item image" style="max-width:100px;">
-                </a>
-                <br>
-                <a href="{% url 'item' listing_id=item.id %}">{{ item.title }}</a>
-                <br>
-                <a href="{% url 'item' listing_id=item.id %}">{{ item.description }}</a>
-                <br>
-                <a href="{% url 'item' listing_id=item.id %}">${{ item.bid_price }}</a>
-                <br>
-                ---------------------------------------------------------
-            </div>
+        {% if item.onpost == 0 %}
+            <h3>Closed item</h3>
         {% endif %}
+        <div>
+            <a href="{% url 'item' listing_id=item.id %}">
+                <img src="{{ item.image_url }}" alt="Item image" style="max-width:100px;">
+            </a>
+            <br>
+            <a href="{% url 'item' listing_id=item.id %}">{{ item.title }}</a>
+            <br>
+            <a href="{% url 'item' listing_id=item.id %}">{{ item.description }}</a>
+            <br>
+            <a href="{% url 'item' listing_id=item.id %}">${{ item.bid_price }}</a>
+            <br>
+            ---------------------------------------------------------
+        </div>
+        
     {% endfor %}
 
 {% endblock %}
